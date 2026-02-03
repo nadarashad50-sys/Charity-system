@@ -30,8 +30,8 @@
         <div class="info"><span class="label">الاسم:</span> <span id="res-name"></span></div>
         <div class="info"><span class="label">الرقم القومي:</span> <span id="res-id"></span></div>
         <div class="info"><span class="label">الجهة:</span> <span id="res-org"></span></div>
-        <div class="info"><span class="label">المنطقة:</span> <span id="res-region"></span></div>
-        <div class="info"><span class="label">الحي:</span> <span id="res-district"></span></div>
+        <div class="info"><span class="label">العنوان:</span> <span id="res-region"></span></div>
+        <div class="info"><span class="label">المنطقة/الحي:</span> <span id="res-district"></span></div>
         
         <label class="label" for="aidType">نوع المعونة:</label>
         <select id="aidType">
@@ -46,7 +46,6 @@
     </div>
 
     <script>
-        // رابط الـ Web App الخاص بكِ من Google Apps Script
         const scriptURL = 'https://script.google.com/macros/s/AKfycbzNQFqyXxTH56GbxxAV4HfYXXkkq9X6BA2-XNTJ6dGfP3uPZ3Vay9c2rNKWCtpvMTe5vw/exec';
         let currentID = "";
 
@@ -57,10 +56,10 @@
                 if (currentID) {
                     fetchData(currentID);
                 } else {
-                    alert("الكود لا يحتوي على معرف ID صحيح.");
+                    alert("الكود الممسوح لا يحتوي على معرف ID صحيح.");
                 }
             } catch (e) {
-                alert("تنبيه: الكود ليس رابطاً صحيحاً.");
+                alert("تنبيه: الكود الممسوح ليس رابطاً صحيحاً.");
             }
         }
 
@@ -72,12 +71,12 @@
                     if (data !== "Not Found") {
                         document.getElementById('result').style.display = 'block';
                         
-                        // الترتيب بناءً على الصورة (A=0, B=1, C=2, E=4, F=5, L=11)
-                        document.getElementById('res-name').innerText = data[1] || "غير مسجل";     // الاسم (B)
-                        document.getElementById('res-id').innerText = data[2] || "غير مسجل";       // الرقم القومي (C)
-                        document.getElementById('res-org').innerText = data[11] || "غير مسجل";    // الجهة (L)
-                        document.getElementById('res-region').innerText = data[4] || "غير مسجل";  // المنطقة (E)
-                        document.getElementById('res-district').innerText = data[5] || "غير مسجل"; // الحي (F)
+                        // الترتيب بناءً على بياناتك الأخيرة: B=1, C=2, F=5, G=6, M=12
+                        document.getElementById('res-name').innerText = data[1] || "غير مسجل";
+                        document.getElementById('res-id').innerText = data[2] || "غير مسجل";
+                        document.getElementById('res-org').innerText = data[12] || "غير مسجل";
+                        document.getElementById('res-region').innerText = data[5] || "غير مسجل";
+                        document.getElementById('res-district').innerText = data[6] || "غير مسجل";
                         
                         document.getElementById('msg').innerText = "";
                     } else {
@@ -111,7 +110,6 @@
             });
         }
 
-        // إعدادات الكاميرا الخلفية وتوافق الأيفون
         var html5QrcodeScanner = new Html5QrcodeScanner(
             "reader", { 
                 fps: 10, 
@@ -122,7 +120,6 @@
 
         function startScanner() {
             html5QrcodeScanner.render(onScanSuccess, (errorMessage) => {
-                // إذا رفض الأيفون الكاميرا الخلفية الإجبارية، نفتح الوضع التلقائي
                 if (errorMessage.includes("OverconstrainedError")) {
                     html5QrcodeScanner.clear();
                     html5QrcodeScanner = new Html5QrcodeScanner("reader", { fps: 10, qrbox: 250 });
