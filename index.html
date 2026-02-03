@@ -6,23 +6,65 @@
     <title>نظام توزيع المعونات</title>
     <script src="https://unpkg.com/html5-qrcode"></script>
     <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; text-align: center; background-color: #f0f2f5; padding: 20px; margin: 0; }
-        h2 { color: #1a73e8; margin-bottom: 20px; }
-        #reader { width: 100%; max-width: 450px; margin: 0 auto; border: 4px solid #28a745; border-radius: 15px; overflow: hidden; background: white; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
-        #result { margin-top: 20px; padding: 20px; background: white; border-radius: 12px; display: none; box-shadow: 0 4px 15px rgba(0,0,0,0.1); text-align: right; max-width: 450px; margin-left: auto; margin-right: auto; }
-        .info { font-size: 1.1em; margin-bottom: 12px; border-bottom: 1px solid #eee; padding-bottom: 8px; }
-        .label { font-weight: bold; color: #2c3e50; margin-left: 5px; }
-        select, button { width: 100%; padding: 15px; margin-top: 15px; border-radius: 8px; font-size: 1em; border: 1px solid #ccc; }
-        button { background-color: #28a745; color: white; border: none; font-weight: bold; cursor: pointer; transition: 0.3s; }
-        button:hover { background-color: #218838; }
-        button:disabled { background-color: #ccc; cursor: not-allowed; }
-        #msg { margin-top: 15px; font-weight: bold; color: #d9534f; }
-        #reader button { padding: 10px; margin: 5px; border-radius: 5px; border: 1px solid #ccc; background: #fff; }
+        /* تحسينات التصميم العام */
+        body { font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; text-align: center; background-color: #f8f9fa; padding: 20px; margin: 0; color: #333; }
+        h2 { color: #1a73e8; margin-bottom: 25px; font-weight: 700; }
+        
+        /* إطار الكاميرا */
+        #reader { width: 100%; max-width: 450px; margin: 0 auto; border: none; border-radius: 20px; overflow: hidden; background: white; box-shadow: 0 10px 25px rgba(0,0,0,0.1); }
+        
+        /* صندوق النتائج */
+        #result { margin-top: 25px; padding: 25px; background: white; border-radius: 20px; display: none; box-shadow: 0 10px 30px rgba(0,0,0,0.08); text-align: right; max-width: 450px; margin-left: auto; margin-right: auto; border-top: 5px solid #28a745; }
+        
+        .info { font-size: 1.15em; margin-bottom: 15px; border-bottom: 1px solid #f1f1f1; padding-bottom: 10px; display: flex; justify-content:建设; }
+        .label { font-weight: 700; color: #5f6368; margin-left: 8px; min-width: 100px; }
+        
+        /* تصميم القائمة المنسدلة */
+        select { width: 100%; padding: 12px 15px; margin-top: 10px; border-radius: 12px; font-size: 1em; border: 2px solid #e0e0e0; background-color: #fff; outline: none; transition: border-color 0.3s; }
+        select:focus { border-color: #1a73e8; }
+
+        /* التصميم الجديد للأزرار */
+        button { 
+            width: 100%; 
+            padding: 16px; 
+            margin-top: 20px; 
+            border-radius: 15px; 
+            font-size: 1.1em; 
+            font-weight: 600; 
+            cursor: pointer; 
+            transition: all 0.3s ease; 
+            border: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        /* زر تأكيد التسليم (أخضر) */
+        #submitBtn { background-color: #28a745; color: white; }
+        #submitBtn:hover { background-color: #218838; transform: translateY(-2px); box-shadow: 0 6px 12px rgba(40, 167, 69, 0.2); }
+        #submitBtn:active { transform: translateY(0); }
+        #submitBtn:disabled { background-color: #bdc3c7; cursor: not-allowed; transform: none; }
+
+        /* أزرار الكاميرا (أزرق) */
+        #reader button { 
+            background-color: #1a73e8 !important; 
+            color: white !important; 
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            padding: 12px 20px !important;
+            margin: 10px auto !important;
+            width: 80% !important;
+        }
+        #reader button:hover { background-color: #1557b0 !important; }
+
+        #msg { margin-top: 20px; font-weight: 600; color: #d93025; font-size: 1em; }
     </style>
 </head>
 <body>
 
-    <h2>نظام تسجيل تسليم المعونات</h2>
+    <h2>نظام توزيع المعونات</h2>
     
     <div id="reader"></div>
 
@@ -31,17 +73,19 @@
         <div class="info"><span class="label">الرقم القومي:</span> <span id="res-id"></span></div>
         <div class="info"><span class="label">الجهة:</span> <span id="res-org"></span></div>
         <div class="info"><span class="label">العنوان:</span> <span id="res-region"></span></div>
-        <div class="info"><span class="label">المنطقة/الحي:</span> <span id="res-district"></span></div>
+        <div class="info"><span class="label">الحي:</span> <span id="res-district"></span></div>
         
-        <label class="label" for="aidType">نوع المعونة:</label>
-        <select id="aidType">
-            <option value="كرتونة مواد غذائية">كرتونة مواد غذائية</option>
-            <option value="لحوم">لحوم</option>
-            <option value="معونة نقدية">معونة نقدية</option>
-            <option value="أخرى">أخرى</option>
-        </select>
+        <div style="text-align: right; margin-top: 15px;">
+            <label class="label" for="aidType">نوع المعونة المستلمة:</label>
+            <select id="aidType">
+                <option value="كرتونة مواد غذائية">📦 كرتونة مواد غذائية</option>
+                <option value="لحوم">🥩 لحوم</option>
+                <option value="معونة نقدية">💰 معونة نقدية</option>
+                <option value="أخرى">✨ أخرى</option>
+            </select>
+        </div>
         
-        <button id="submitBtn" onclick="submitDelivery()">تأكيد عملية التسليم</button>
+        <button id="submitBtn" onclick="submitDelivery()">✅ تأكيد عملية التسليم</button>
         <div id="msg"></div>
     </div>
 
@@ -53,39 +97,27 @@
             try {
                 const url = new URL(decodedText);
                 currentID = url.searchParams.get("id");
-                if (currentID) {
-                    fetchData(currentID);
-                } else {
-                    alert("الكود الممسوح لا يحتوي على معرف ID صحيح.");
-                }
-            } catch (e) {
-                alert("تنبيه: الكود الممسوح ليس رابطاً صحيحاً.");
-            }
+                if (currentID) { fetchData(currentID); }
+            } catch (e) { console.error("Invalid QR"); }
         }
 
         function fetchData(id) {
-            document.getElementById('msg').innerText = "جاري جلب بيانات المواطن...";
+            document.getElementById('msg').innerText = "⏳ جاري جلب البيانات...";
             fetch(`${scriptURL}?id=${id}`)
                 .then(response => response.json())
                 .then(data => {
                     if (data !== "Not Found") {
                         document.getElementById('result').style.display = 'block';
-                        
-                        // الترتيب بناءً على بياناتك الأخيرة: B=1, C=2, F=5, G=6, M=12
-                        document.getElementById('res-name').innerText = data[1] || "غير مسجل";
-                        document.getElementById('res-id').innerText = data[2] || "غير مسجل";
-                        document.getElementById('res-org').innerText = data[12] || "غير مسجل";
-                        document.getElementById('res-region').innerText = data[5] || "غير مسجل";
-                        document.getElementById('res-district').innerText = data[6] || "غير مسجل";
-                        
+                        document.getElementById('res-name').innerText = data[1] || "—";
+                        document.getElementById('res-id').innerText = data[2] || "—";
+                        document.getElementById('res-org').innerText = data[12] || "—";
+                        document.getElementById('res-region').innerText = data[6] || "—";
+                        document.getElementById('res-district').innerText = data[8] || "—";
                         document.getElementById('msg').innerText = "";
                     } else {
-                        alert("عفواً، هذا المواطن غير مسجل.");
+                        alert("⚠️ عذراً، هذا المعرف غير مسجل بالنظام");
                         document.getElementById('msg').innerText = "";
                     }
-                })
-                .catch(err => {
-                    alert("خطأ في الاتصال بقاعدة البيانات.");
                 });
         }
 
@@ -93,41 +125,16 @@
             const btn = document.getElementById('submitBtn');
             const aid = document.getElementById('aidType').value;
             btn.disabled = true;
-            document.getElementById('msg').innerText = "جاري تسجيل التسليم...";
-
-            fetch(scriptURL, {
-                method: 'POST',
-                mode: 'no-cors',
-                body: JSON.stringify({ id: currentID, aidType: aid })
-            })
+            document.getElementById('msg').innerText = "🔄 جاري الحفظ في شيت جوجل...";
+            fetch(scriptURL, { method: 'POST', mode: 'no-cors', body: JSON.stringify({ id: currentID, aidType: aid }) })
             .then(() => {
-                alert("تم تسجيل التسليم بنجاح!");
+                alert("🎊 تم تسجيل العملية بنجاح");
                 location.reload();
-            })
-            .catch(error => {
-                alert("حدث خطأ أثناء التسجيل.");
-                btn.disabled = false;
             });
         }
 
-        var html5QrcodeScanner = new Html5QrcodeScanner(
-            "reader", { 
-                fps: 10, 
-                qrbox: 250, 
-                videoConstraints: { facingMode: { exact: "environment" } } 
-            }
-        );
-
-        function startScanner() {
-            html5QrcodeScanner.render(onScanSuccess, (errorMessage) => {
-                if (errorMessage.includes("OverconstrainedError")) {
-                    html5QrcodeScanner.clear();
-                    html5QrcodeScanner = new Html5QrcodeScanner("reader", { fps: 10, qrbox: 250 });
-                    html5QrcodeScanner.render(onScanSuccess);
-                }
-            });
-        }
-        startScanner();
+        var html5QrcodeScanner = new Html5QrcodeScanner("reader", { fps: 10, qrbox: 250, videoConstraints: { facingMode: { exact: "environment" } } });
+        html5QrcodeScanner.render(onScanSuccess);
     </script>
 </body>
 </html>
