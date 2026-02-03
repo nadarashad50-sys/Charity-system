@@ -17,7 +17,6 @@
         button:hover { background-color: #218838; }
         button:disabled { background-color: #ccc; cursor: not-allowed; }
         #msg { margin-top: 15px; font-weight: bold; color: #d9534f; }
-        /* تحسين مظهر أزرار الكاميرا في الأيفون */
         #reader button { padding: 10px; margin: 5px; border-radius: 5px; border: 1px solid #ccc; background: #fff; }
     </style>
 </head>
@@ -30,6 +29,9 @@
     <div id="result">
         <div class="info"><span class="label">الاسم:</span> <span id="res-name"></span></div>
         <div class="info"><span class="label">الرقم القومي:</span> <span id="res-id"></span></div>
+        <div class="info"><span class="label">الجهة:</span> <span id="res-org"></span></div>
+        <div class="info"><span class="label">المنطقة:</span> <span id="res-region"></span></div>
+        <div class="info"><span class="label">الحي:</span> <span id="res-district"></span></div>
         
         <label class="label" for="aidType">نوع المعونة:</label>
         <select id="aidType">
@@ -44,22 +46,21 @@
     </div>
 
     <script>
+        // رابط الـ Web App الخاص بكِ من Google Apps Script
         const scriptURL = 'https://script.google.com/macros/s/AKfycbzNQFqyXxTH56GbxxAV4HfYXXkkq9X6BA2-XNTJ6dGfP3uPZ3Vay9c2rNKWCtpvMTe5vw/exec';
         let currentID = "";
 
         function onScanSuccess(decodedText) {
-            console.log("تم مسح الكود: " + decodedText);
             try {
                 const url = new URL(decodedText);
                 currentID = url.searchParams.get("id");
-                
                 if (currentID) {
                     fetchData(currentID);
                 } else {
-                    alert("الكود الممسوح لا يحتوي على رقم قومي صحيح.");
+                    alert("الكود لا يحتوي على معرف ID صحيح.");
                 }
             } catch (e) {
-                alert("تنبيه: الكود الممسوح ليس رابطاً صحيحاً للنظام.");
+                alert("تنبيه: الكود ليس رابطاً صحيحاً.");
             }
         }
 
@@ -70,16 +71,21 @@
                 .then(data => {
                     if (data !== "Not Found") {
                         document.getElementById('result').style.display = 'block';
-                        document.getElementById('res-name').innerText = data[1];
-                        document.getElementById('res-id').innerText = data[2];
+                        
+                        // الترتيب بناءً على الصورة (A=0, B=1, C=2, E=4, F=5, L=11)
+                        document.getElementById('res-name').innerText = data[1] || "غير مسجل";     // الاسم (B)
+                        document.getElementById('res-id').innerText = data[2] || "غير مسجل";       // الرقم القومي (C)
+                        document.getElementById('res-org').innerText = data[11] || "غير مسجل";    // الجهة (L)
+                        document.getElementById('res-region').innerText = data[4] || "غير مسجل";  // المنطقة (E)
+                        document.getElementById('res-district').innerText = data[5] || "غير مسجل"; // الحي (F)
+                        
                         document.getElementById('msg').innerText = "";
                     } else {
-                        alert("عفواً، هذا المواطن غير مسجل في قاعدة البيانات.");
+                        alert("عفواً، هذا المواطن غير مسجل.");
                         document.getElementById('msg').innerText = "";
                     }
                 })
                 .catch(err => {
-                    console.error(err);
                     alert("خطأ في الاتصال بقاعدة البيانات.");
                 });
         }
@@ -87,9 +93,8 @@
         function submitDelivery() {
             const btn = document.getElementById('submitBtn');
             const aid = document.getElementById('aidType').value;
-            
             btn.disabled = true;
-            document.getElementById('msg').innerText = "جاري تسجيل التسليم في النظام...";
+            document.getElementById('msg').innerText = "جاري تسجيل التسليم...";
 
             fetch(scriptURL, {
                 method: 'POST',
@@ -97,31 +102,27 @@
                 body: JSON.stringify({ id: currentID, aidType: aid })
             })
             .then(() => {
-                alert("تم تسجيل التسليم بنجاح في شيت جوجل!");
+                alert("تم تسجيل التسليم بنجاح!");
                 location.reload();
             })
             .catch(error => {
                 alert("حدث خطأ أثناء التسجيل.");
                 btn.disabled = false;
-                document.getElementById('msg').innerText = "";
             });
         }
 
-        // التعديلات الجديدة هنا لضبط الكاميرا الخلفية والأيفون
+        // إعدادات الكاميرا الخلفية وتوافق الأيفون
         var html5QrcodeScanner = new Html5QrcodeScanner(
-            "reader", 
-            { 
+            "reader", { 
                 fps: 10, 
-                qrbox: 250,
-                // إجبار النظام على محاولة استخدام الكاميرا الخلفية أولاً
+                qrbox: 250, 
                 videoConstraints: { facingMode: { exact: "environment" } } 
             }
         );
 
-        // دالة للتعامل مع أخطاء الأيفون (Safari)
         function startScanner() {
             html5QrcodeScanner.render(onScanSuccess, (errorMessage) => {
-                // إذا فشل في فتح الكاميرا الخلفية (كما في بعض إصدارات أيفون)، نحاول فتح الكاميرا المتاحة
+                // إذا رفض الأيفون الكاميرا الخلفية الإجبارية، نفتح الوضع التلقائي
                 if (errorMessage.includes("OverconstrainedError")) {
                     html5QrcodeScanner.clear();
                     html5QrcodeScanner = new Html5QrcodeScanner("reader", { fps: 10, qrbox: 250 });
@@ -129,7 +130,6 @@
                 }
             });
         }
-
         startScanner();
     </script>
 </body>
