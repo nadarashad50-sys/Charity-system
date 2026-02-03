@@ -6,28 +6,30 @@
     <title>نظام توزيع المعونات</title>
     <script src="https://unpkg.com/html5-qrcode"></script>
     <style>
-        body { font-family: Arial, sans-serif; text-align: center; background-color: #f4f4f4; padding: 20px; }
-        #reader { width: 100%; max-width: 500px; margin: auto; border: 2px solid #333; border-radius: 10px; }
-        #result { margin-top: 20px; padding: 15px; background: white; border-radius: 10px; display: none; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
-        .data-field { font-size: 1.2em; margin: 10px 0; color: #333; }
-        .data-label { font-weight: bold; color: #555; }
-        select, button { padding: 12px; font-size: 1.1em; width: 100%; margin-top: 10px; border-radius: 5px; cursor: pointer; }
-        button { background-color: #28a745; color: white; border: none; }
-        button:disabled { background-color: #ccc; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; text-align: center; background-color: #f0f2f5; padding: 20px; margin: 0; }
+        h2 { color: #1a73e8; margin-bottom: 20px; }
+        #reader { width: 100%; max-width: 450px; margin: 0 auto; border: 4px solid #28a745; border-radius: 15px; overflow: hidden; background: white; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+        #result { margin-top: 20px; padding: 20px; background: white; border-radius: 12px; display: none; box-shadow: 0 4px 15px rgba(0,0,0,0.1); text-align: right; max-width: 450px; margin-left: auto; margin-right: auto; }
+        .info { font-size: 1.1em; margin-bottom: 12px; border-bottom: 1px solid #eee; padding-bottom: 8px; }
+        .label { font-weight: bold; color: #2c3e50; margin-left: 5px; }
+        select, button { width: 100%; padding: 15px; margin-top: 15px; border-radius: 8px; font-size: 1em; border: 1px solid #ccc; }
+        button { background-color: #28a745; color: white; border: none; font-weight: bold; cursor: pointer; transition: 0.3s; }
+        button:hover { background-color: #218838; }
+        button:disabled { background-color: #ccc; cursor: not-allowed; }
+        #msg { margin-top: 15px; font-weight: bold; color: #d9534f; }
     </style>
 </head>
 <body>
 
     <h2>نظام تسجيل تسليم المعونات</h2>
+    
     <div id="reader"></div>
 
     <div id="result">
-        <div class="data-field"><span class="data-label">الاسم: </span><span id="res-name"></span></div>
-        <div class="data-field"><span class="data-label">الرقم القومي: </span><span id="res-id"></span></div>
-        <div class="data-field"><span class="data-label">العنوان: </span><span id="res-address"></span></div>
+        <div class="info"><span class="label">الاسم:</span> <span id="res-name"></span></div>
+        <div class="info"><span class="label">الرقم القومي:</span> <span id="res-id"></span></div>
         
-        <hr>
-        <label>نوع المعونة:</label>
+        <label class="label" for="aidType">نوع المعونة:</label>
         <select id="aidType">
             <option value="كرتونة مواد غذائية">كرتونة مواد غذائية</option>
             <option value="لحوم">لحوم</option>
@@ -35,69 +37,82 @@
             <option value="أخرى">أخرى</option>
         </select>
         
-        <button id="submitBtn" onclick="submitDelivery()">تأكيد التسليم</button>
-        <p id="msg"></p>
+        <button id="submitBtn" onclick="submitDelivery()">تأكيد عملية التسليم</button>
+        <div id="msg"></div>
     </div>
 
     <script>
+        // رابط Google Apps Script الخاص بكِ
         const scriptURL = 'https://script.google.com/macros/s/AKfycbzNQFqyXxTH56GbxxAV4HfYXXkkq9X6BA2-XNTJ6dGfP3uPZ3Vay9c2rNKWCtpvMTe5vw/exec';
         let currentID = "";
 
+        // دالة تعمل عند نجاح المسح
         function onScanSuccess(decodedText) {
-            // استخراج الرقم القومي من الرابط الممسوح
+            console.log("تم مسح الكود: " + decodedText);
             try {
+                // محاولة استخراج الرقم القومي من الرابط
                 const url = new URL(decodedText);
                 currentID = url.searchParams.get("id");
                 
                 if (currentID) {
+                    // إيقاف الكاميرا مؤقتاً لجلب البيانات
                     fetchData(currentID);
+                } else {
+                    alert("الكود الممسوح لا يحتوي على رقم قومي صحيح.");
                 }
             } catch (e) {
-                alert("كود غير صالح");
+                alert("تنبيه: الكود الممسوح ليس رابطاً صحيحاً للنظام.");
             }
         }
 
+        // دالة جلب البيانات من شيت جوجل
         function fetchData(id) {
-            document.getElementById('msg').innerText = "جاري جلب البيانات...";
+            document.getElementById('msg').innerText = "جاري جلب بيانات المواطن...";
             fetch(`${scriptURL}?id=${id}`)
                 .then(response => response.json())
                 .then(data => {
                     if (data !== "Not Found") {
                         document.getElementById('result').style.display = 'block';
-                        document.getElementById('res-name').innerText = data[1]; // الاسم في العمود الثاني
-                        document.getElementById('res-id').innerText = data[2];   // الرقم القومي في الثالث
-                        document.getElementById('res-address').innerText = data[5]; // العنوان في السادس
+                        document.getElementById('res-name').innerText = data[1]; // العمود الثاني: الاسم
+                        document.getElementById('res-id').innerText = data[2];   // العمود الثالث: الرقم القومي
                         document.getElementById('msg').innerText = "";
                     } else {
-                        alert("المواطن غير مسجل بالنظام");
+                        alert("عفواً، هذا المواطن غير مسجل في قاعدة البيانات.");
+                        document.getElementById('msg').innerText = "";
                     }
+                })
+                .catch(err => {
+                    console.error(err);
+                    alert("خطأ في الاتصال بقاعدة البيانات.");
                 });
         }
 
+        // دالة إرسال تأكيد التسليم
         function submitDelivery() {
             const btn = document.getElementById('submitBtn');
             const aid = document.getElementById('aidType').value;
+            
             btn.disabled = true;
-            document.getElementById('msg').innerText = "جاري التسجيل...";
+            document.getElementById('msg').innerText = "جاري تسجيل التسليم في النظام...";
 
             fetch(scriptURL, {
                 method: 'POST',
+                mode: 'no-cors', // لتجنب مشاكل المتصفحات
                 body: JSON.stringify({ id: currentID, aidType: aid })
             })
-            .then(res => res.text())
-            .then(response => {
-                if (response === "Success") {
-                    alert("تم تسجيل التسليم بنجاح!");
-                    location.reload();
-                }
+            .then(() => {
+                alert("تم تسجيل التسليم بنجاح في شيت جوجل!");
+                location.reload(); // إعادة تحميل الصفحة للمسح التالي
             })
             .catch(error => {
-                alert("حدث خطأ في الاتصال");
+                alert("حدث خطأ أثناء التسجيل.");
                 btn.disabled = false;
+                document.getElementById('msg').innerText = "";
             });
         }
 
-        let html5QrcodeScanner = new html5I2cScanner("reader", { fps: 10, qrbox: 250 });
+        // تشغيل الماسح الضوئي (تأكدي من حرف H الكبير هنا)
+        var html5QrcodeScanner = new Html5QrcodeScanner("reader", { fps: 10, qrbox: 250 });
         html5QrcodeScanner.render(onScanSuccess);
     </script>
 </body>
