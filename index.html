@@ -8,39 +8,22 @@
     <style>
         body { font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; text-align: center; background-color: #f8f9fa; padding: 20px; margin: 0; color: #333; }
         h2 { color: #1a73e8; margin-bottom: 25px; font-weight: 700; }
-        
-        /* إطار الكاميرا */
-        #reader { width: 100%; max-width: 450px; margin: 0 auto; border: none; border-radius: 25px; overflow: hidden; background: #000; box-shadow: 0 10px 25px rgba(0,0,0,0.2); position: relative; }
-        
-        /* صندوق النتائج */
+        #reader { width: 100%; max-width: 450px; margin: 0 auto; border: none; border-radius: 25px; overflow: hidden; background: #000; box-shadow: 0 10px 25px rgba(0,0,0,0.2); }
         #result { margin-top: 25px; padding: 25px; background: white; border-radius: 20px; display: none; box-shadow: 0 10px 30px rgba(0,0,0,0.08); text-align: right; max-width: 450px; margin-left: auto; margin-right: auto; border-top: 6px solid #28a745; }
-        
         .info { font-size: 1.1em; margin-bottom: 15px; border-bottom: 1px solid #f1f1f1; padding-bottom: 10px; }
         .label { font-weight: 700; color: #5f6368; margin-left: 8px; }
-        
-        select { width: 100%; padding: 14px; margin-top: 10px; border-radius: 12px; font-size: 1em; border: 2px solid #e0e0e0; outline: none; transition: 0.3s; }
-        select:focus { border-color: #1a73e8; }
-
-        /* الأزرار المطورة */
-        .btn { 
-            width: 100%; padding: 16px; margin-top: 20px; border-radius: 15px; font-size: 1.1em; font-weight: 600; 
-            cursor: pointer; transition: 0.3s; border: none; display: flex; align-items: center; justify-content: center; gap: 10px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-        }
-        
+        select { width: 100%; padding: 14px; margin-top: 10px; border-radius: 12px; font-size: 1em; border: 2px solid #e0e0e0; outline: none; }
+        .btn { width: 100%; padding: 16px; margin-top: 15px; border-radius: 15px; font-size: 1.1em; font-weight: 600; cursor: pointer; border: none; display: flex; align-items: center; justify-content: center; gap: 10px; }
         #submitBtn { background-color: #28a745; color: white; }
-        #submitBtn:hover { background-color: #218838; transform: translateY(-2px); }
-        
-        #startBtn { background-color: #1a73e8; color: white; margin-bottom: 20px; max-width: 450px; margin-left: auto; margin-right: auto; }
-
+        #resetBtn { background-color: #6c757d; color: white; display: none; } /* زر إعادة المسح */
         #msg { margin-top: 20px; font-weight: 600; color: #d93025; }
+        /* ستايل زر رفع الملفات */
+        #reader__dashboard_section_fsapp { margin-top: 15px !important; padding: 10px !important; }
     </style>
 </head>
 <body>
 
     <h2>نظام تسجيل المعونات</h2>
-
-    <button id="startBtn" class="btn" onclick="startCamera()">📷 فتح الكاميرا الخلفية</button>
     
     <div id="reader"></div>
 
@@ -62,39 +45,42 @@
         </div>
         
         <button id="submitBtn" class="btn" onclick="submitDelivery()">✅ تأكيد عملية التسليم</button>
+        <button id="resetBtn" class="btn" onclick="resetScanner()">🔄 مسح كود آخر</button>
         <div id="msg"></div>
     </div>
 
     <script>
         const scriptURL = 'https://script.google.com/macros/s/AKfycbzNQFqyXxTH56GbxxAV4HfYXXkkq9X6BA2-XNTJ6dGfP3uPZ3Vay9c2rNKWCtpvMTe5vw/exec';
         let currentID = "";
-        const html5QrCode = new Html5Qrcode("reader");
+        let isScanning = true;
 
-        function startCamera() {
-            document.getElementById('startBtn').style.display = 'none';
-            
-            // التعديل الجوهري: إجبار الكاميرا الخلفية (environment) وتجاهل الأمامية
-            const config = { fps: 10, qrbox: { width: 250, height: 250 } };
-            
-            html5QrCode.start(
-                { facingMode: "environment" }, 
-                config, 
-                onScanSuccess
-            ).catch(err => {
-                alert("خطأ في فتح الكاميرا الخلفية، تأكد من إعطاء الإذن.");
-                document.getElementById('startBtn').style.display = 'block';
-            });
-        }
+        // إعداد السكنر مع تفعيل خاصية رفع الملفات (File Scan)
+        const html5QrcodeScanner = new Html5QrcodeScanner(
+            "reader", 
+            { 
+                fps: 10, 
+                qrbox: 250,
+                videoConstraints: { facingMode: { exact: "environment" } },
+                rememberLastUsedCamera: true,
+                supportedScanTypes: [
+                    Html5QrcodeScanType.SCAN_TYPE_CAMERA,
+                    Html5QrcodeScanType.SCAN_TYPE_FILE // دي اللي بترجع ميزة رفع الصورة
+                ]
+            }
+        );
 
         function onScanSuccess(decodedText) {
-            html5QrCode.stop(); // إيقاف الكاميرا مؤقتاً عند النجاح
+            if (!isScanning) return; // منع المسح المتكرر أثناء عرض البيانات
+            
             try {
                 const url = new URL(decodedText);
                 currentID = url.searchParams.get("id");
-                if (currentID) { fetchData(currentID); }
-            } catch (e) { 
-                alert("كود غير صحيح");
-                startCamera(); 
+                if (currentID) {
+                    isScanning = false; // توقيف المسح مؤقتاً
+                    fetchData(currentID);
+                }
+            } catch (e) {
+                console.error("QR Code Error");
             }
         }
 
@@ -105,17 +91,26 @@
                 .then(data => {
                     if (data !== "Not Found") {
                         document.getElementById('result').style.display = 'block';
+                        document.getElementById('resetBtn').style.display = 'flex';
                         document.getElementById('res-name').innerText = data[1] || "—";
                         document.getElementById('res-id').innerText = data[2] || "—";
                         document.getElementById('res-org').innerText = data[12] || "—";
-                        document.getElementById('res-region').innerText = data[6] || "—";
-                        document.getElementById('res-district').innerText = data[8] || "—";
+                        document.getElementById('res-region').innerText = data[5] || "—";
+                        document.getElementById('res-district').innerText = data[6] || "—";
                         document.getElementById('msg').innerText = "";
                     } else {
                         alert("المواطن غير مسجل");
-                        location.reload();
+                        resetScanner();
                     }
                 });
+        }
+
+        function resetScanner() {
+            isScanning = true;
+            currentID = "";
+            document.getElementById('result').style.display = 'none';
+            document.getElementById('resetBtn').style.display = 'none';
+            document.getElementById('msg').innerText = "";
         }
 
         function submitDelivery() {
@@ -126,9 +121,12 @@
             fetch(scriptURL, { method: 'POST', mode: 'no-cors', body: JSON.stringify({ id: currentID, aidType: aid }) })
             .then(() => {
                 alert("🎊 تم التسجيل بنجاح");
-                location.reload();
+                resetScanner(); // يرجع يشغل الكاميرا تانى بعد النجاح
+                btn.disabled = false;
             });
         }
+
+        html5QrcodeScanner.render(onScanSuccess);
     </script>
 </body>
 </html>
