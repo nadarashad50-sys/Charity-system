@@ -3,106 +3,170 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>نظام توزيع المعونات</title>
+    <title>نظام تسجيل المعونات الاحترافي</title>
     <script src="https://unpkg.com/html5-qrcode"></script>
     <style>
-        body { font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; text-align: center; background-color: #f8f9fa; padding: 20px; margin: 0; color: #333; }
-        h2 { color: #1a73e8; margin-bottom: 25px; font-weight: 700; }
-        #reader { width: 100%; max-width: 450px; margin: 0 auto; border: none; border-radius: 25px; overflow: hidden; background: #000; box-shadow: 0 10px 25px rgba(0,0,0,0.2); }
-        #result { margin-top: 25px; padding: 25px; background: white; border-radius: 20px; display: none; box-shadow: 0 10px 30px rgba(0,0,0,0.08); text-align: right; max-width: 450px; margin-left: auto; margin-right: auto; border-top: 6px solid #28a745; }
-        .info { font-size: 1.1em; margin-bottom: 15px; border-bottom: 1px solid #f1f1f1; padding-bottom: 10px; }
-        .label { font-weight: 700; color: #5f6368; margin-left: 8px; }
-        select { width: 100%; padding: 14px; margin-top: 10px; border-radius: 12px; font-size: 1em; border: 2px solid #e0e0e0; outline: none; }
-        .btn { width: 100%; padding: 16px; margin-top: 15px; border-radius: 15px; font-size: 1.1em; font-weight: 600; cursor: pointer; border: none; display: flex; align-items: center; justify-content: center; gap: 10px; }
-        #submitBtn { background-color: #28a745; color: white; }
-        #resetBtn { background-color: #6c757d; color: white; display: none; } /* زر إعادة المسح */
-        #msg { margin-top: 20px; font-weight: 600; color: #d93025; }
-        /* ستايل زر رفع الملفات */
-        #reader__dashboard_section_fsapp { margin-top: 15px !important; padding: 10px !important; }
+        body { font-family: 'Segoe UI', Tahoma, sans-serif; background-color: #f0f2f5; display: flex; align-items: center; justify-content: center; min-height: 100vh; margin: 0; padding: 10px; }
+        .container { background: white; padding: 25px; border-radius: 25px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); width: 100%; max-width: 450px; }
+        h2 { color: #1a73e8; margin-bottom: 20px; font-weight: 700; }
+        
+        /* واجهة الدخول */
+        #login-box { display: block; }
+        #system-content { display: none; }
+
+        input, select, button { width: 100%; padding: 15px; margin-top: 15px; border-radius: 12px; border: 2px solid #ddd; font-size: 1.1em; outline: none; box-sizing: border-box; }
+        button { background-color: #1a73e8; color: white; border: none; font-weight: bold; cursor: pointer; transition: 0.3s; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        button:hover { background-color: #1557b0; transform: translateY(-2px); }
+        
+        /* واجهة النظام */
+        #reader { width: 100%; border-radius: 20px; overflow: hidden; background: #000; margin-top: 15px; }
+        #result { display: none; text-align: right; border-top: 6px solid #28a745; margin-top: 25px; padding-top: 15px; }
+        .info { font-size: 1.05em; margin-bottom: 12px; border-bottom: 1px solid #f1f1f1; padding-bottom: 8px; }
+        .label { font-weight: bold; color: #5f6368; margin-left: 8px; }
+        
+        #submitBtn { background-color: #28a745; }
+        #resetBtn { background-color: #6c757d; margin-bottom: 10px; }
+        #msg { margin-top: 15px; font-weight: bold; color: #d93025; }
+        
+        .user-badge { background: #e8f0fe; color: #1a73e8; padding: 8px 15px; border-radius: 20px; font-weight: bold; display: inline-block; margin-bottom: 10px; }
     </style>
 </head>
 <body>
 
-    <h2>نظام تسجيل المعونات</h2>
-    
-    <div id="reader"></div>
-
-    <div id="result">
-        <div class="info"><span class="label">الاسم:</span> <span id="res-name"></span></div>
-        <div class="info"><span class="label">الرقم القومي:</span> <span id="res-id"></span></div>
-        <div class="info"><span class="label">الجهة:</span> <span id="res-org"></span></div>
-        <div class="info"><span class="label">العنوان:</span> <span id="res-region"></span></div>
-        <div class="info"><span class="label">المنطقة/الحي:</span> <span id="res-district"></span></div>
-        
-        <div style="text-align: right; margin-top: 15px;">
-            <label class="label">نوع المعونة:</label>
-            <select id="aidType">
-                <option value="كرتونة مواد غذائية">📦 كرتونة مواد غذائية</option>
-                <option value="لحوم">🥩 لحوم</option>
-                <option value="معونة نقدية">💰 معونة نقدية</option>
-                <option value="أخرى">✨ أخرى</option>
+    <div class="container">
+        <div id="login-box">
+            <h2>🔐 تسجيل الدخول</h2>
+            <select id="username">
+                <option value="">-- اختر المسئول --</option>
+                <option value="ندى">ندى</option>
+                <option value="أحمد">أحمد</option>
+                <option value="محمد">محمد</option>
             </select>
+            <input type="password" id="password" placeholder="كلمة السر">
+            <button onclick="checkLogin()">دخول للنظام</button>
+            <p id="login-error" style="color:red; display:none; margin-top:10px;">❌ بيانات الدخول غير صحيحة</p>
         </div>
-        
-        <button id="submitBtn" class="btn" onclick="submitDelivery()">✅ تأكيد عملية التسليم</button>
-        <button id="resetBtn" class="btn" onclick="resetScanner()">🔄 مسح كود آخر</button>
-        <div id="msg"></div>
+
+        <div id="system-content">
+            <div class="user-badge">👤 المسئول: <span id="logged-user-name"></span></div>
+            
+            <div id="reader"></div>
+            
+            <button id="resetBtn" onclick="resetScanner()">🔄 مسح كود جديد</button>
+
+            <div id="result">
+                <div class="info"><span class="label">الاسم:</span> <span id="res-name"></span></div>
+                <div class="info"><span class="label">الرقم القومي:</span> <span id="res-id"></span></div>
+                <div class="info"><span class="label">الجهة:</span> <span id="res-org"></span></div>
+                <div class="info"><span class="label">العنوان:</span> <span id="res-address"></span></div>
+                <div class="info"><span class="label">المنطقة/الحي:</span> <span id="res-region"></span></div>
+                
+                <div style="text-align: right; margin-top: 15px;">
+                    <label class="label">نوع المعونة:</label>
+                    <select id="aidType">
+                        <option value="كرتونة مواد غذائية">📦 كرتونة مواد غذائية</option>
+                        <option value="لحوم">🥩 لحوم</option>
+                        <option value="معونة نقدية">💰 معونة نقدية</option>
+                        <option value="أخرى">✨ أخرى</option>
+                    </select>
+                </div>
+                
+                <button id="submitBtn" onclick="submitDelivery()">✅ تأكيد عملية التسليم</button>
+            </div>
+            <div id="msg"></div>
+        </div>
     </div>
 
     <script>
+        // إعدادات الدخول
+        const users = { "ندى": "123", "أحمد": "456", "محمد": "789" };
         const scriptURL = 'https://script.google.com/macros/s/AKfycbzNQFqyXxTH56GbxxAV4HfYXXkkq9X6BA2-XNTJ6dGfP3uPZ3Vay9c2rNKWCtpvMTe5vw/exec';
+        
         let currentID = "";
+        let loggedUser = "";
         let isScanning = true;
+        let html5QrcodeScanner;
 
-        // إعداد السكنر مع تفعيل خاصية رفع الملفات (File Scan)
-        const html5QrcodeScanner = new Html5QrcodeScanner(
-            "reader", 
-            { 
-                fps: 10, 
-                qrbox: 250,
-                videoConstraints: { facingMode: { exact: "environment" } },
-                rememberLastUsedCamera: true,
-                supportedScanTypes: [
-                    Html5QrcodeScanType.SCAN_TYPE_CAMERA,
-                    Html5QrcodeScanType.SCAN_TYPE_FILE // دي اللي بترجع ميزة رفع الصورة
-                ]
+        function checkLogin() {
+            const u = document.getElementById('username').value;
+            const p = document.getElementById('password').value;
+            if (users[u] && users[u] === p) {
+                loggedUser = u;
+                document.getElementById('login-box').style.display = 'none';
+                document.getElementById('system-content').style.display = 'block';
+                document.getElementById('logged-user-name').innerText = loggedUser;
+                initScanner();
+            } else {
+                document.getElementById('login-error').style.display = 'block';
             }
-        );
+        }
+
+        function initScanner() {
+            html5QrcodeScanner = new Html5QrcodeScanner("reader", { 
+                fps: 10, qrbox: 250,
+                videoConstraints: { facingMode: { exact: "environment" } },
+                supportedScanTypes: [Html5QrcodeScanType.SCAN_TYPE_CAMERA, Html5QrcodeScanType.SCAN_TYPE_FILE]
+            });
+            html5QrcodeScanner.render(onScanSuccess);
+        }
 
         function onScanSuccess(decodedText) {
-            if (!isScanning) return; // منع المسح المتكرر أثناء عرض البيانات
-            
+            if (!isScanning) return;
             try {
                 const url = new URL(decodedText);
                 currentID = url.searchParams.get("id");
                 if (currentID) {
-                    isScanning = false; // توقيف المسح مؤقتاً
+                    isScanning = false;
                     fetchData(currentID);
                 }
-            } catch (e) {
-                console.error("QR Code Error");
-            }
+            } catch (e) { console.error("QR Code Error"); }
         }
 
         function fetchData(id) {
-            document.getElementById('msg').innerText = "⏳ جاري التحقق...";
+            document.getElementById('msg').innerText = "⏳ جاري التحقق من البيانات...";
             fetch(`${scriptURL}?id=${id}`)
                 .then(response => response.json())
                 .then(data => {
                     if (data !== "Not Found") {
                         document.getElementById('result').style.display = 'block';
-                        document.getElementById('resetBtn').style.display = 'flex';
+                        document.getElementById('resetBtn').style.display = 'block';
+                        
+                        // الترتيب حسب طلبك (B=1, C=2, F=5, G=6, M=12)
                         document.getElementById('res-name').innerText = data[1] || "—";
                         document.getElementById('res-id').innerText = data[2] || "—";
                         document.getElementById('res-org').innerText = data[12] || "—";
-                        document.getElementById('res-region').innerText = data[5] || "—";
-                        document.getElementById('res-district').innerText = data[6] || "—";
+                        document.getElementById('res-address').innerText = data[5] || "—";
+                        document.getElementById('res-region').innerText = data[6] || "—";
                         document.getElementById('msg').innerText = "";
                     } else {
-                        alert("المواطن غير مسجل");
+                        alert("⚠️ عذراً، هذا المعرف غير مسجل");
                         resetScanner();
                     }
                 });
+        }
+
+        function submitDelivery() {
+            const btn = document.getElementById('submitBtn');
+            const aid = document.getElementById('aidType').value;
+            btn.disabled = true;
+            document.getElementById('msg').innerText = "🔄 جاري الحفظ باسم " + loggedUser + "...";
+
+            fetch(scriptURL, {
+                method: 'POST',
+                mode: 'no-cors',
+                body: JSON.stringify({ 
+                    id: currentID, 
+                    aidType: aid, 
+                    recorderName: loggedUser 
+                })
+            }).then(() => {
+                alert("🎊 تم تسجيل العملية بنجاح!");
+                resetScanner();
+                btn.disabled = false;
+            }).catch(err => {
+                alert("خطأ في التسجيل");
+                btn.disabled = false;
+            });
         }
 
         function resetScanner() {
@@ -112,21 +176,6 @@
             document.getElementById('resetBtn').style.display = 'none';
             document.getElementById('msg').innerText = "";
         }
-
-        function submitDelivery() {
-            const btn = document.getElementById('submitBtn');
-            const aid = document.getElementById('aidType').value;
-            btn.disabled = true;
-            document.getElementById('msg').innerText = "🔄 جاري التسجيل...";
-            fetch(scriptURL, { method: 'POST', mode: 'no-cors', body: JSON.stringify({ id: currentID, aidType: aid }) })
-            .then(() => {
-                alert("🎊 تم التسجيل بنجاح");
-                resetScanner(); // يرجع يشغل الكاميرا تانى بعد النجاح
-                btn.disabled = false;
-            });
-        }
-
-        html5QrcodeScanner.render(onScanSuccess);
     </script>
 </body>
 </html>
