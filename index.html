@@ -4,130 +4,232 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>نظام توزيع المعونات</title>
+
+    <!-- QR Library -->
     <script src="https://unpkg.com/html5-qrcode"></script>
+
+    <!-- Styling -->
     <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; text-align: center; background-color: #f0f2f5; padding: 20px; margin: 0; }
-        h2 { color: #1a73e8; margin-bottom: 20px; }
-        #reader { width: 100%; max-width: 450px; margin: 0 auto; border: 4px solid #28a745; border-radius: 15px; overflow: hidden; background: white; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
-        #result { margin-top: 20px; padding: 20px; background: white; border-radius: 12px; display: none; box-shadow: 0 4px 15px rgba(0,0,0,0.1); text-align: right; max-width: 450px; margin-left: auto; margin-right: auto; }
-        .info { font-size: 1.1em; margin-bottom: 12px; border-bottom: 1px solid #eee; padding-bottom: 8px; }
-        .label { font-weight: bold; color: #2c3e50; margin-left: 5px; }
-        select, button { width: 100%; padding: 15px; margin-top: 15px; border-radius: 8px; font-size: 1em; border: 1px solid #ccc; }
-        button { background-color: #28a745; color: white; border: none; font-weight: bold; cursor: pointer; transition: 0.3s; }
-        button:hover { background-color: #218838; }
-        button:disabled { background-color: #ccc; cursor: not-allowed; }
-        #msg { margin-top: 15px; font-weight: bold; color: #d9534f; }
-        #reader button { padding: 10px; margin: 5px; border-radius: 5px; border: 1px solid #ccc; background: #fff; }
+        :root {
+            --primary: #1a73e8;
+            --success: #28a745;
+            --danger: #dc3545;
+            --bg: #f4f6f9;
+            --card: #ffffff;
+            --text: #2c3e50;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: "Segoe UI", Tahoma, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            padding: 20px;
+        }
+
+        h2 {
+            margin-bottom: 20px;
+            color: var(--primary);
+        }
+
+        .container {
+            max-width: 480px;
+            margin: auto;
+        }
+
+        /* Scanner */
+        #reader {
+            background: var(--card);
+            border-radius: 16px;
+            padding: 10px;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.08);
+            border: 3px solid var(--success);
+        }
+
+        /* Card */
+        .card {
+            margin-top: 20px;
+            background: var(--card);
+            border-radius: 16px;
+            padding: 20px;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.08);
+            display: none;
+            text-align: right;
+        }
+
+        .info {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px dashed #eee;
+            font-size: 1.05em;
+        }
+
+        .info:last-child {
+            border-bottom: none;
+        }
+
+        .label {
+            font-weight: 600;
+            color: #555;
+        }
+
+        select, button {
+            width: 100%;
+            padding: 14px;
+            margin-top: 15px;
+            border-radius: 10px;
+            font-size: 1em;
+        }
+
+        select {
+            border: 1px solid #ccc;
+        }
+
+        button {
+            background: var(--success);
+            color: #fff;
+            border: none;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+
+        button:hover {
+            background: #218838;
+        }
+
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+
+        .status {
+            margin-top: 15px;
+            font-weight: bold;
+            text-align: center;
+        }
+
+        .status.loading { color: var(--primary); }
+        .status.error { color: var(--danger); }
+        .status.success { color: var(--success); }
+
     </style>
 </head>
 <body>
 
+<div class="container">
+
     <h2>نظام تسجيل تسليم المعونات</h2>
-    
+
+    <!-- QR Reader -->
     <div id="reader"></div>
 
-    <div id="result">
-        <div class="info"><span class="label">الاسم:</span> <span id="res-name"></span></div>
-        <div class="info"><span class="label">الرقم القومي:</span> <span id="res-id"></span></div>
-        <div class="info"><span class="label">الجهة:</span> <span id="res-org"></span></div>
-        <div class="info"><span class="label">المنطقة:</span> <span id="res-region"></span></div>
-        <div class="info"><span class="label">الحي:</span> <span id="res-district"></span></div>
-        
-        <label class="label" for="aidType">نوع المعونة:</label>
+    <!-- Result Card -->
+    <div class="card" id="resultCard">
+
+        <div class="info"><span class="label">الاسم</span><span id="res-name"></span></div>
+        <div class="info"><span class="label">الرقم القومي</span><span id="res-id"></span></div>
+        <div class="info"><span class="label">الجهة</span><span id="res-org"></span></div>
+        <div class="info"><span class="label">المنطقة</span><span id="res-region"></span></div>
+        <div class="info"><span class="label">الحي</span><span id="res-district"></span></div>
+
+        <label class="label" for="aidType">نوع المعونة</label>
         <select id="aidType">
-            <option value="كرتونة مواد غذائية">كرتونة مواد غذائية</option>
-            <option value="لحوم">لحوم</option>
-            <option value="معونة نقدية">معونة نقدية</option>
-            <option value="أخرى">أخرى</option>
+            <option>كرتونة مواد غذائية</option>
+            <option>لحوم</option>
+            <option>معونة نقدية</option>
+            <option>أخرى</option>
         </select>
-        
-        <button id="submitBtn" onclick="submitDelivery()">تأكيد عملية التسليم</button>
-        <div id="msg"></div>
+
+        <button id="submitBtn">تأكيد التسليم</button>
+
+        <div id="status" class="status"></div>
     </div>
 
-    <script>
-        const scriptURL = 'https://script.google.com/macros/s/AKfycbzNQFqyXxTH56GbxxAV4HfYXXkkq9X6BA2-XNTJ6dGfP3uPZ3Vay9c2rNKWCtpvMTe5vw/exec';
-        let currentID = "";
+</div>
 
-        function onScanSuccess(decodedText) {
-            try {
-                const url = new URL(decodedText);
-                currentID = url.searchParams.get("id");
-                if (currentID) {
-                    fetchData(currentID);
-                } else {
-                    alert("الكود الممسوح لا يحتوي على معرف ID صحيح.");
+<script>
+    const scriptURL = "https://script.google.com/macros/s/AKfycbzNQFqyXxTH56GbxxAV4HfYXXkkq9X6BA2-XNTJ6dGfP3uPZ3Vay9c2rNKWCtpvMTe5vw/exec";
+
+    let currentID = "";
+
+    const statusEl = document.getElementById("status");
+    const card = document.getElementById("resultCard");
+
+    function setStatus(text, type = "loading") {
+        statusEl.className = `status ${type}`;
+        statusEl.innerText = text;
+    }
+
+    function onScanSuccess(decodedText) {
+        try {
+            const url = new URL(decodedText);
+            const id = url.searchParams.get("id");
+
+            if (!id) throw "Invalid";
+
+            currentID = id;
+            fetchCitizen(id);
+
+        } catch {
+            alert("⚠️ كود QR غير صالح");
+        }
+    }
+
+    function fetchCitizen(id) {
+        setStatus("جاري جلب بيانات المواطن...");
+
+        fetch(`${scriptURL}?id=${id}`)
+            .then(res => res.json())
+            .then(data => {
+                if (data === "Not Found") {
+                    setStatus("المواطن غير مسجل", "error");
+                    return;
                 }
-            } catch (e) {
-                alert("تنبيه: الكود الممسوح ليس رابطاً صحيحاً.");
-            }
-        }
 
-        function fetchData(id) {
-            document.getElementById('msg').innerText = "جاري جلب بيانات المواطن...";
-            fetch(`${scriptURL}?id=${id}`)
-                .then(response => response.json())
-                .then(data => {
-                    if (data !== "Not Found") {
-                        document.getElementById('result').style.display = 'block';
-                        
-                        // الترتيب بناءً على بياناتك الأخيرة: B=1, C=2, F=5, G=6, M=12
-                        document.getElementById('res-name').innerText = data[1] || "غير مسجل";
-                        document.getElementById('res-id').innerText = data[2] || "غير مسجل";
-                        document.getElementById('res-org').innerText = data[12] || "غير مسجل";
-                        document.getElementById('res-region').innerText = data[6] || "غير مسجل";
-                        document.getElementById('res-district').innerText = data[8] || "غير مسجل";
-                        
-                        document.getElementById('msg').innerText = "";
-                    } else {
-                        alert("عفواً، هذا المواطن غير مسجل.");
-                        document.getElementById('msg').innerText = "";
-                    }
-                })
-                .catch(err => {
-                    alert("خطأ في الاتصال بقاعدة البيانات.");
-                });
-        }
+                card.style.display = "block";
 
-        function submitDelivery() {
-            const btn = document.getElementById('submitBtn');
-            const aid = document.getElementById('aidType').value;
-            btn.disabled = true;
-            document.getElementById('msg').innerText = "جاري تسجيل التسليم...";
+                document.getElementById("res-name").innerText = data[1] || "-";
+                document.getElementById("res-id").innerText = data[2] || "-";
+                document.getElementById("res-org").innerText = data[12] || "-";
+                document.getElementById("res-region").innerText = data[6] || "-";
+                document.getElementById("res-district").innerText = data[8] || "-";
 
-            fetch(scriptURL, {
-                method: 'POST',
-                mode: 'no-cors',
-                body: JSON.stringify({ id: currentID, aidType: aid })
+                setStatus("");
+
             })
-            .then(() => {
-                alert("تم تسجيل التسليم بنجاح!");
-                location.reload();
+            .catch(() => setStatus("خطأ في الاتصال", "error"));
+    }
+
+    document.getElementById("submitBtn").onclick = function () {
+        this.disabled = true;
+        setStatus("جاري تسجيل عملية التسليم...");
+
+        fetch(scriptURL, {
+            method: "POST",
+            mode: "no-cors",
+            body: JSON.stringify({
+                id: currentID,
+                aidType: document.getElementById("aidType").value
             })
-            .catch(error => {
-                alert("حدث خطأ أثناء التسجيل.");
-                btn.disabled = false;
-            });
-        }
+        }).then(() => {
+            alert("✅ تم تسجيل التسليم بنجاح");
+            location.reload();
+        });
+    };
 
-        var html5QrcodeScanner = new Html5QrcodeScanner(
-            "reader", { 
-                fps: 10, 
-                qrbox: 250, 
-                videoConstraints: { facingMode: { exact: "environment" } } 
-            }
-        );
+    const scanner = new Html5QrcodeScanner("reader", {
+        fps: 10,
+        qrbox: 250
+    });
 
-        function startScanner() {
-            html5QrcodeScanner.render(onScanSuccess, (errorMessage) => {
-                if (errorMessage.includes("OverconstrainedError")) {
-                    html5QrcodeScanner.clear();
-                    html5QrcodeScanner = new Html5QrcodeScanner("reader", { fps: 10, qrbox: 250 });
-                    html5QrcodeScanner.render(onScanSuccess);
-                }
-            });
-        }
-        startScanner();
-    </script>
+    scanner.render(onScanSuccess);
+</script>
+
 </body>
 </html>
