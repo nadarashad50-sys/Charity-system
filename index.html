@@ -30,8 +30,8 @@
         <div class="info"><span class="label">الاسم:</span> <span id="res-name"></span></div>
         <div class="info"><span class="label">الرقم القومي:</span> <span id="res-id"></span></div>
         <div class="info"><span class="label">الجهة:</span> <span id="res-org"></span></div>
-        <div class="info"><span class="label">العنوان:</span> <span id="res-region"></span></div>
-        <div class="info"><span class="label">المنطقة/الحي:</span> <span id="res-district"></span></div>
+        <div class="info"><span class="label">المنطقة:</span> <span id="res-region"></span></div>
+        <div class="info"><span class="label">الحي:</span> <span id="res-district"></span></div>
         
         <label class="label" for="aidType">نوع المعونة:</label>
         <select id="aidType">
@@ -75,8 +75,8 @@
                         document.getElementById('res-name').innerText = data[1] || "غير مسجل";
                         document.getElementById('res-id').innerText = data[2] || "غير مسجل";
                         document.getElementById('res-org').innerText = data[12] || "غير مسجل";
-                        document.getElementById('res-region').innerText = data[5] || "غير مسجل";
-                        document.getElementById('res-district').innerText = data[6] || "غير مسجل";
+                        document.getElementById('res-region').innerText = data[6] || "غير مسجل";
+                        document.getElementById('res-district').innerText = data[8] || "غير مسجل";
                         
                         document.getElementById('msg').innerText = "";
                     } else {
