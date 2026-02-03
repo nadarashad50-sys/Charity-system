@@ -17,6 +17,8 @@
         button:hover { background-color: #218838; }
         button:disabled { background-color: #ccc; cursor: not-allowed; }
         #msg { margin-top: 15px; font-weight: bold; color: #d9534f; }
+        /* تحسين مظهر أزرار الكاميرا في الأيفون */
+        #reader button { padding: 10px; margin: 5px; border-radius: 5px; border: 1px solid #ccc; background: #fff; }
     </style>
 </head>
 <body>
@@ -42,20 +44,16 @@
     </div>
 
     <script>
-        // رابط Google Apps Script الخاص بكِ
         const scriptURL = 'https://script.google.com/macros/s/AKfycbzNQFqyXxTH56GbxxAV4HfYXXkkq9X6BA2-XNTJ6dGfP3uPZ3Vay9c2rNKWCtpvMTe5vw/exec';
         let currentID = "";
 
-        // دالة تعمل عند نجاح المسح
         function onScanSuccess(decodedText) {
             console.log("تم مسح الكود: " + decodedText);
             try {
-                // محاولة استخراج الرقم القومي من الرابط
                 const url = new URL(decodedText);
                 currentID = url.searchParams.get("id");
                 
                 if (currentID) {
-                    // إيقاف الكاميرا مؤقتاً لجلب البيانات
                     fetchData(currentID);
                 } else {
                     alert("الكود الممسوح لا يحتوي على رقم قومي صحيح.");
@@ -65,7 +63,6 @@
             }
         }
 
-        // دالة جلب البيانات من شيت جوجل
         function fetchData(id) {
             document.getElementById('msg').innerText = "جاري جلب بيانات المواطن...";
             fetch(`${scriptURL}?id=${id}`)
@@ -73,8 +70,8 @@
                 .then(data => {
                     if (data !== "Not Found") {
                         document.getElementById('result').style.display = 'block';
-                        document.getElementById('res-name').innerText = data[1]; // العمود الثاني: الاسم
-                        document.getElementById('res-id').innerText = data[2];   // العمود الثالث: الرقم القومي
+                        document.getElementById('res-name').innerText = data[1];
+                        document.getElementById('res-id').innerText = data[2];
                         document.getElementById('msg').innerText = "";
                     } else {
                         alert("عفواً، هذا المواطن غير مسجل في قاعدة البيانات.");
@@ -87,7 +84,6 @@
                 });
         }
 
-        // دالة إرسال تأكيد التسليم
         function submitDelivery() {
             const btn = document.getElementById('submitBtn');
             const aid = document.getElementById('aidType').value;
@@ -97,12 +93,12 @@
 
             fetch(scriptURL, {
                 method: 'POST',
-                mode: 'no-cors', // لتجنب مشاكل المتصفحات
+                mode: 'no-cors',
                 body: JSON.stringify({ id: currentID, aidType: aid })
             })
             .then(() => {
                 alert("تم تسجيل التسليم بنجاح في شيت جوجل!");
-                location.reload(); // إعادة تحميل الصفحة للمسح التالي
+                location.reload();
             })
             .catch(error => {
                 alert("حدث خطأ أثناء التسجيل.");
@@ -111,9 +107,30 @@
             });
         }
 
-        // تشغيل الماسح الضوئي (تأكدي من حرف H الكبير هنا)
-        var html5QrcodeScanner = new Html5QrcodeScanner("reader", { fps: 10, qrbox: 250 });
-        html5QrcodeScanner.render(onScanSuccess);
+        // التعديلات الجديدة هنا لضبط الكاميرا الخلفية والأيفون
+        var html5QrcodeScanner = new Html5QrcodeScanner(
+            "reader", 
+            { 
+                fps: 10, 
+                qrbox: 250,
+                // إجبار النظام على محاولة استخدام الكاميرا الخلفية أولاً
+                videoConstraints: { facingMode: { exact: "environment" } } 
+            }
+        );
+
+        // دالة للتعامل مع أخطاء الأيفون (Safari)
+        function startScanner() {
+            html5QrcodeScanner.render(onScanSuccess, (errorMessage) => {
+                // إذا فشل في فتح الكاميرا الخلفية (كما في بعض إصدارات أيفون)، نحاول فتح الكاميرا المتاحة
+                if (errorMessage.includes("OverconstrainedError")) {
+                    html5QrcodeScanner.clear();
+                    html5QrcodeScanner = new Html5QrcodeScanner("reader", { fps: 10, qrbox: 250 });
+                    html5QrcodeScanner.render(onScanSuccess);
+                }
+            });
+        }
+
+        startScanner();
     </script>
 </body>
 </html>
